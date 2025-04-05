@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compton</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --manager-color: #ff4da6;
+            --admin-color: #4d79ff;
+            --owner-color: #ffd24d;
+            --text-light: #ffffff;
+            --text-dim: #dddddd;
+            --bg-dark: #000000;
+            --bg-transparent: rgba(0, 0, 0, 0.7);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            overflow: hidden;
+            min-height: 100vh;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        /* Glowing stars background */
+        .star-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle var(--duration) infinite ease-in-out;
+            opacity: 0;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; }
+            50% { opacity: var(--opacity); }
+        }
+        
+        /* Main container */
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.5s ease;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards;
+            z-index: 1;
+            margin: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                width: 95%;
+            }
+        }
+        
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+        
+        .logo-container {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .logo-container:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+        }
+        
+        .logo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            position: relative;
+            overflow: hidden;
+            width: 200px;
+            max-width: 100%;
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        /* Profile page styles */
+        .profile-page {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            text-align: center;
+        }
+        
+        .profile-page.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        
+        .back-btn i {
+            font-size: 1.2rem;
+            color: white;
+        }
+        
+        .role {
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin: 0 auto 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .manager {
+            background: linear-gradient(45deg, var(--manager-color), #e60073);
+        }
+        
+        .admin {
+            background: linear-gradient(45deg, var(--admin-color), #0066e6);
+        }
+        
+        .owner {
+            background: linear-gradient(45deg, var(--owner-color), #e6a700);
+        }
+        
+        .about-me {
+            margin: 20px auto;
+            font-style: italic;
+            font-size: 1.1rem;
+            color: var(--text-dim);
+            padding: 0 10px;
+            max-width: 80%;
+        }
+        
+        .music-player {
+            margin: 30px auto 0;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            transition: all 0.3s ease;
+            max-width: 100%;
+        }
+        
+        .music-player:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .music-control {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .music-control:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .song-info {
+            text-align: center;
+            flex-grow: 1;
+        }
+        
+        .song-title {
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+        
+        .song-artist {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+        
+        /* Profile layout */
+        .profile-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .profile-banner {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (max-width: 480px) {
+            .profile-banner {
+                height: 120px;
+            }
+        }
+        
+        .profile-img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            margin-top: -50px;
+            z-index: 2;
+            background: var(--bg-dark);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .profile-img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .profile-name {
+            margin-top: 10px;
+            font-size: 1.8rem;
+            font-weight: 600;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Theme elements */
+        .theme-element {
+            position: absolute;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        /* Cherry blossoms for exotic */
+        .cherry-blossom {
+            width: 15px;
+            height: 15px;
+            background: #ffb6c1;
+            border-radius: 50% 0 50% 50%;
+            opacity: 0;
+            animation: fall linear infinite;
+        }
+        
+        /* Snowflakes for insane */
+        .snowflake {
+            width: 10px;
+            height: 10px;
+            background: white;
+            clip-path: polygon(
+                50% 0%,
+                60% 40%,
+                100% 50%,
+                60% 60%,
+                50% 100%,
+                40% 60%,
+                0% 50%,
+                40% 40%
+            );
+            opacity: 0;
+            animation: fall linear infinite;
+        }
+        
+        /* Coins for axey */
+        .coin {
+            width: 15px;
+            height: 15px;
+            background: gold;
+            border-radius: 50%;
+            opacity: 0;
+            animation: fall linear infinite;
+            box-shadow: 0 0 5px gold;
+        }
+        
+        @keyframes fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Progress bar */
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, var(--manager-color), var(--admin-color));
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+        
+        /* Time display */
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+        
+        /* Volume control */
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px auto 0;
+            max-width: 200px;
+        }
+        
+        .volume-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            outline: none;
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <!-- Star Background -->
+    <div class="star-bg" id="star-bg"></div>
+    
+    <!-- Main Page -->
+    <div class="container" id="main-page">
+        <div class="logo-container">
+            <img src="https://cdn.discordapp.com/avatars/1174178069762801707/3eddd8591b43380b10a105cb5f1408e7.png?size=512" class="logo-img" alt="Compton Logo">
+        </div>
+        <div class="buttons">
+            <button class="btn" onclick="showProfile('exotic')">Exotic</button>
+            <button class="btn" onclick="showProfile('insane')">Insane</button>
+            <button class="btn" onclick="showProfile('axey')">Axey</button>
+        </div>
+    </div>
+    
+    <!-- Exotic Profile Page -->
+    <div class="container profile-page" id="exotic-page">
+        <button class="back-btn" onclick="backToMain()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <div class="profile-header">
+            <img src="https://i.pinimg.com/originals/ed/42/39/ed42393e1dddf3dca397714648e5f4a3.gif" class="profile-banner" alt="Banner">
+            <img src="https://i.pinimg.com/736x/03/b5/fe/03b5fe9f196dffa74b1de540017c6b4d.jpg" class="profile-img" alt="Exotic">
+            <div class="profile-name">Exotic</div>
+            <div class="role manager">Manager</div>
+        </div>
+        <div class="about-me">"never show them the process. show them the result."</div>
+        
+        <!-- Anime theme elements -->
+        <div id="anime-elements"></div>
+        
+        <!-- Music Player -->
+        <div class="music-player">
+            <button class="music-control" id="exotic-play-btn" onclick="toggleMusic('exotic')">
+                <i class="fas fa-play" id="exotic-play-icon"></i>
+            </button>
+            <div class="song-info">
+                <div class="song-title">Wishing</div>
+                <div class="song-artist">Unknown</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="exotic-progress"></div>
+                </div>
+                <div class="time-display">
+                    <span id="exotic-current-time">0:00</span>
+                    <span id="exotic-duration">0:00</span>
+                </div>
+            </div>
+        </div>
+        <div class="volume-control">
+            <i class="fas fa-volume-up"></i>
+            <input type="range" min="0" max="1" step="0.01" value="0.5" class="volume-slider" id="exotic-volume" oninput="setVolume('exotic', this.value)">
+        </div>
+    </div>
+    
+    <!-- Insane Profile Page -->
+    <div class="container profile-page" id="insane-page">
+        <button class="back-btn" onclick="backToMain()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <div class="profile-header">
+            <div style="width:100%;height:150px;background:linear-gradient(to right, #1a2a6c, #b21f1f, #fdbb2d);border-radius:10px;margin-bottom:15px;"></div>
+            <img src="https://cdn.discordapp.com/avatars/1339580713510506536/9e3c8e02fd48a7d0832acc3dd303915c.png?size=512" class="profile-img" alt="Insane">
+            <div class="profile-name">Insane</div>
+            <div class="role admin">Admin</div>
+        </div>
+        <div class="about-me">"if you want it to go smoothly, do it yourself."</div>
+        <!-- Snow elements -->
+        <div id="snow-elements"></div>
+        
+        <!-- Music Player -->
+        <div class="music-player">
+            <button class="music-control" id="insane-play-btn" onclick="toggleMusic('insane')">
+                <i class="fas fa-play" id="insane-play-icon"></i>
+            </button>
+            <div class="song-info">
+                <div class="song-title">Snowfall</div>
+                <div class="song-artist">Øneheart</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="insane-progress"></div>
+                </div>
+                <div class="time-display">
+                    <span id="insane-current-time">0:00</span>
+                    <span id="insane-duration">0:00</span>
+                </div>
+            </div>
+        </div>
+        <div class="volume-control">
+            <i class="fas fa-volume-up"></i>
+            <input type="range" min="0" max="1" step="0.01" value="0.5" class="volume-slider" id="insane-volume" oninput="setVolume('insane', this.value)">
+        </div>
+    </div>
+    
+    <!-- Axey Profile Page -->
+    <div class="container profile-page" id="axey-page">
+        <button class="back-btn" onclick="backToMain()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <div class="profile-header">
+            <div style="width:100%;height:150px;background:linear-gradient(to right, #000000, #434343);border-radius:10px;margin-bottom:15px;"></div>
+            <img src="https://cdn.discordapp.com/avatars/1174178069762801707/3eddd8591b43380b10a105cb5f1408e7.png?size=512" class="profile-img" alt="Axey">
+            <div class="profile-name">Axey</div>
+            <div class="role owner">Owner</div>
+        </div>
+        <div class="about-me">"improve your life by getting rich."</div>
+        <!-- Coin elements -->
+        <div id="coin-elements"></div>
+    </div>
+    
+    <!-- Audio elements -->
+    <audio id="exotic-music" loop>
+        <source src="media/wishing.mp3" type="audio/mpeg">
+    </audio>
+    
+    <audio id="insane-music" loop>
+        <source src="media/snowfall.mp3" type="audio/mpeg">
+    </audio>
+    
+    <script>
+        // Create glowing stars background
+        function createStars() {
+            const starBg = document.getElementById('star-bg');
+            const starCount = 100;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                
+                // Random properties
+                const size = Math.random() * 3 + 1;
+                const posX = Math.random() * 100;
+                const posY = Math.random() * 100;
+                const opacity = Math.random() * 0.8 + 0.2;
+                const duration = Math.random() * 5 + 3;
+                const delay = Math.random() * 5;
+                
+                // Apply properties
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.left = `${posX}%`;
+                star.style.top = `${posY}%`;
+                star.style.setProperty('--opacity', opacity);
+                star.style.setProperty('--duration', `${duration}s`);
+                star.style.animationDelay = `${delay}s`;
+                
+                starBg.appendChild(star);
+            }
+        }
+        
+        // Create cherry blossoms for exotic
+        function createCherryBlossoms() {
+            const container = document.getElementById('anime-elements');
+            const blossomCount = 15;
+            
+            for (let i = 0; i < blossomCount; i++) {
+                const blossom = document.createElement('div');
+                blossom.classList.add('cherry-blossom', 'theme-element');
+                
+                // Random position
+                blossom.style.left = Math.random() * 100 + '%';
+                
+                // Random size
+                const size = Math.random() * 10 + 5;
+                blossom.style.width = size + 'px';
+                blossom.style.height = size + 'px';
+                
+                // Random animation duration and delay
+                const duration = Math.random() * 10 + 5;
+                blossom.style.animationDuration = duration + 's';
+                blossom.style.animationDelay = Math.random() * 5 + 's';
+                
+                container.appendChild(blossom);
+            }
+        }
+        
+        // Create snowflakes for insane
+        function createSnowflakes() {
+            const container = document.getElementById('snow-elements');
+            const flakeCount = 30;
+            
+            for (let i = 0; i < flakeCount; i++) {
+                const flake = document.createElement('div');
+                flake.classList.add('snowflake', 'theme-element');
+                
+                // Random position
+                flake.style.left = Math.random() * 100 + '%';
+                
+                // Random size
+                const size = Math.random() * 8 + 4;
+                flake.style.width = size + 'px';
+                flake.style.height = size + 'px';
+                
+                // Random animation duration and delay
+                const duration = Math.random() * 15 + 5;
+                flake.style.animationDuration = duration + 's';
+                flake.style.animationDelay = Math.random() * 5 + 's';
+                
+                container.appendChild(flake);
+            }
+        }
+        
+        // Create coins for axey
+        function createCoins() {
+            const container = document.getElementById('coin-elements');
+            const coinCount = 20;
+            
+            for (let i = 0; i < coinCount; i++) {
+                const coin = document.createElement('div');
+                coin.classList.add('coin', 'theme-element');
+                
+                // Random position
+                coin.style.left = Math.random() * 100 + '%';
+                
+                // Random size
+                const size = Math.random() * 10 + 5;
+                coin.style.width = size + 'px';
+                coin.style.height = size + 'px';
+                
+                // Random animation duration and delay
+                const duration = Math.random() * 8 + 3;
+                coin.style.animationDuration = duration + 's';
+                coin.style.animationDelay = Math.random() * 5 + 's';
+                
+                container.appendChild(coin);
+            }
+        }
+        
+        // Show profile page
+        function showProfile(profile) {
+            document.getElementById('main-page').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('main-page').style.display = 'none';
+                const profilePage = document.getElementById(profile + '-page');
+                profilePage.style.display = 'block';
+                setTimeout(() => {
+                    profilePage.classList.add('active');
+                    profilePage.style.opacity = '1';
+                }, 10);
+                
+                // Create theme elements based on profile
+                if (profile === 'exotic') {
+                    createCherryBlossoms();
+                } else if (profile === 'insane') {
+                    createSnowflakes();
+                } else if (profile === 'axey') {
+                    createCoins();
+                }
+            }, 500);
+        }
+        
+        // Back to main page
+        function backToMain() {
+            const activeProfile = document.querySelector('.profile-page.active');
+            if (activeProfile) {
+                activeProfile.style.opacity = '0';
+                activeProfile.classList.remove('active');
+                setTimeout(() => {
+                    activeProfile.style.display = 'none';
+                    
+                    // Clear theme elements
+                    const elements = document.querySelectorAll('.theme-element');
+                    elements.forEach(el => el.remove());
+                    
+                    // Stop all music
+                    document.getElementById('exotic-music').pause();
+                    document.getElementById('insane-music').pause();
+                    document.getElementById('exotic-play-icon').className = 'fas fa-play';
+                    document.getElementById('insane-play-icon').className = 'fas fa-play';
+                    
+                    document.getElementById('main-page').style.display = 'block';
+                    setTimeout(() => {
+                        document.getElementById('main-page').style.opacity = '1';
+                    }, 10);
+                }, 500);
+            }
+        }
+        
+        // Music control
+        function toggleMusic(profile) {
+            const music = document.getElementById(profile + '-music');
+            const playIcon = document.getElementById(profile + '-play-icon');
+            
+            // Pause all other music
+            if (profile !== 'exotic') {
+                document.getElementById('exotic-music').pause();
+                document.getElementById('exotic-play-icon').className = 'fas fa-play';
+            }
+            if (profile !== 'insane') {
+                document.getElementById('insane-music').pause();
+                document.getElementById('insane-play-icon').className = 'fas fa-play';
+            }
+            
+            if (music.paused) {
+                music.play();
+                playIcon.className = 'fas fa-pause';
+            } else {
+                music.pause();
+                playIcon.className = 'fas fa-play';
+            }
+        }
+        
+        // Set volume
+        function setVolume(profile, volume) {
+            document.getElementById(profile + '-music').volume = volume;
+        }
+        
+        // Update progress bar
+        function updateProgressBars() {
+            const exoticMusic = document.getElementById('exotic-music');
+            const insaneMusic = document.getElementById('insane-music');
+            
+            if (!exoticMusic.paused) {
+                const progress = (exoticMusic.currentTime / exoticMusic.duration) * 100;
+                document.getElementById('exotic-progress').style.width = `${progress}%`;
+                
+                // Update time display
+                document.getElementById('exotic-current-time').textContent = 
+                    formatTime(exoticMusic.currentTime);
+                document.getElementById('exotic-duration').textContent = 
+                    formatTime(exoticMusic.duration);
+            }
+            
+            if (!insaneMusic.paused) {
+                const progress = (insaneMusic.currentTime / insaneMusic.duration) * 100;
+                document.getElementById('insane-progress').style.width = `${progress}%`;
+                
+                // Update time display
+                document.getElementById('insane-current-time').textContent = 
+                    formatTime(insaneMusic.currentTime);
+                document.getElementById('insane-duration').textContent = 
+                    formatTime(insaneMusic.duration);
+            }
+            
+            requestAnimationFrame(updateProgressBars);
+        }
+        
+        // Format time (seconds to MM:SS)
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+        
+        // Initialize
+        window.onload = function() {
+            createStars();
+            
+            // Set initial volume
+            setVolume('exotic', 0.5);
+            setVolume('insane', 0.5);
+            
+            // Start progress bar updates
+            updateProgressBars();
+            
+            // Add click event to progress container to seek
+            document.getElementById('exotic-progress').parentElement.addEventListener('click', function(e) {
+                const exoticMusic = document.getElementById('exotic-music');
+                const percent = e.offsetX / this.offsetWidth;
+                exoticMusic.currentTime = percent * exoticMusic.duration;
+            });
+            
+            document.getElementById('insane-progress').parentElement.addEventListener('click', function(e) {
+                const insaneMusic = document.getElementById('insane-music');
+                const percent = e.offsetX / this.offsetWidth;
+                insaneMusic.currentTime = percent * insaneMusic.duration;
+            });
+        };
+    </script>
+</body>
+</html>
